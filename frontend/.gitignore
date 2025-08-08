@@ -1,0 +1,25 @@
+# Общие
+.DS_Store
+Thumbs.db
+*.log
+.env
+
+# Node.js
+node_modules/
+dist/
+build/
+
+# Python
+__pycache__/
+*.pyc
+env/
+venv/
+
+# IDE и редакторы
+.vscode/
+.idea/
+*.iml
+
+# Docker
+*.tar
+docker-compose.override.yml
