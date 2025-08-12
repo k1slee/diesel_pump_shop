@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import '../styles/product-detail.css';  // Изменено с './styles/product-detail.css'
+import '../styles/product-detail.css';
 
 const ProductDetail = ({ addToCart }) => {
   const { slug } = useParams();
@@ -12,7 +12,12 @@ const ProductDetail = ({ addToCart }) => {
     fetch(`/api/products/${slug}/`)
       .then(response => response.json())
       .then(data => {
-        setProduct(data);
+        // Добавляем безопасное преобразование цены
+        const processedProduct = {
+          ...data,
+          price: parseFloat(data.price) || 0 // Гарантируем число
+        };
+        setProduct(processedProduct);
         setLoading(false);
       })
       .catch(error => {
@@ -28,6 +33,12 @@ const ProductDetail = ({ addToCart }) => {
         quantity: parseInt(quantity)
       });
     }
+  };
+
+  // Функция для безопасного форматирования цены
+  const formatPrice = (price) => {
+    const numericPrice = typeof price === 'number' ? price : parseFloat(price) || 0;
+    return `£${numericPrice.toFixed(2)}`;
   };
 
   if (loading) {
@@ -52,7 +63,8 @@ const ProductDetail = ({ addToCart }) => {
       
       <div className="product-info">
         <h1>{product.name}</h1>
-        <p className="price">£{product.price.toFixed(2)}</p>
+        {/* Используем безопасное форматирование */}
+        <p className="price">{formatPrice(product.price)}</p>
         <p className="availability">
           {product.available ? 
             `In Stock (${product.stock} available)` : 
@@ -70,7 +82,7 @@ const ProductDetail = ({ addToCart }) => {
         
         <div className="description">
           <h3>Description</h3>
-          <p>{product.description}</p>
+          <p>{product.description || 'No description available'}</p>
         </div>
         
         {product.available && (
@@ -83,7 +95,7 @@ const ProductDetail = ({ addToCart }) => {
                 min="1"
                 max={product.stock}
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock, e.target.value)))}
               />
             </div>
             <button 
