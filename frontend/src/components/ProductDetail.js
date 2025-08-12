@@ -9,15 +9,12 @@ const ProductDetail = ({ addToCart }) => {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    fetch(`/api/products/${slug}/`)
+    fetch(`http://127.0.0.1:8000/api/products/${slug}/`)
       .then(response => response.json())
       .then(data => {
-        // Добавляем безопасное преобразование цены
-        const processedProduct = {
-          ...data,
-          price: parseFloat(data.price) || 0 // Гарантируем число
-        };
-        setProduct(processedProduct);
+        // Безопасное преобразование цены
+        const price = parseFloat(data.price) || 0;
+        setProduct({ ...data, price });
         setLoading(false);
       })
       .catch(error => {
@@ -26,82 +23,40 @@ const ProductDetail = ({ addToCart }) => {
       });
   }, [slug]);
 
-  const handleAddToCart = () => {
-    if (product && quantity > 0) {
-      addToCart({
-        ...product,
-        quantity: parseInt(quantity)
-      });
-    }
-  };
-
-  // Функция для безопасного форматирования цены
-  const formatPrice = (price) => {
-    const numericPrice = typeof price === 'number' ? price : parseFloat(price) || 0;
-    return `£${numericPrice.toFixed(2)}`;
-  };
-
-  if (loading) {
-    return <div className="loading">Loading product details...</div>;
-  }
-
-  if (!product) {
-    return <div className="error">Product not found</div>;
-  }
+  if (loading) return <div className="loading">Loading product details...</div>;
+  if (!product) return <div className="error">Product not found</div>;
 
   return (
     <div className="product-detail">
       <div className="product-images">
-        {product.image && (
-          <img 
-            src={`/media/${product.image}`} 
-            alt={product.name} 
-            className="main-image"
-          />
-        )}
+        <img 
+          src={product.image} 
+          alt={product.name}
+          onError={(e) => e.target.src = '/placeholder.jpg'}
+        />
       </div>
       
       <div className="product-info">
         <h1>{product.name}</h1>
-        {/* Используем безопасное форматирование */}
-        <p className="price">{formatPrice(product.price)}</p>
-        <p className="availability">
-          {product.available ? 
-            `In Stock (${product.stock} available)` : 
-            'Out of Stock'}
+        <p className="price">£{product.price.toFixed(2)}</p>
+        <p className={product.available ? 'in-stock' : 'out-of-stock'}>
+          {product.available ? `In Stock (${product.stock})` : 'Out of Stock'}
         </p>
         
-        <div className="manufacturer-info">
-          {product.manufacturer && (
-            <p><strong>Manufacturer:</strong> {product.manufacturer}</p>
-          )}
-          {product.part_number && (
-            <p><strong>Part Number:</strong> {product.part_number}</p>
-          )}
-        </div>
-        
-        <div className="description">
-          <h3>Description</h3>
-          <p>{product.description || 'No description available'}</p>
-        </div>
+        {product.manufacturer && (
+          <p><strong>Manufacturer:</strong> {product.manufacturer}</p>
+        )}
         
         {product.available && (
           <div className="add-to-cart">
-            <div className="quantity-selector">
-              <label htmlFor="quantity">Quantity:</label>
-              <input
-                type="number"
-                id="quantity"
-                min="1"
-                max={product.stock}
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock, e.target.value)))}
-              />
-            </div>
-            <button 
-              onClick={handleAddToCart}
-              disabled={!product.available}
-            >
+            <input
+              type="number"
+              min="1"
+              max={product.stock}
+              value={quantity}
+              onChange={(e) => setQuantity(Math.max(1, e.target.value))}
+            />
+            <button onClick={() => addToCart({...product, quantity})}>
               Add to Cart
             </button>
           </div>

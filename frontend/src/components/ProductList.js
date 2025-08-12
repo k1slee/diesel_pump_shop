@@ -11,30 +11,16 @@ const ProductList = () => {
   useEffect(() => {
     setLoading(true);
     const url = category 
-      ? `/api/products/?category=${category}`
-      : '/api/products/';
+      ? `http://127.0.0.1:8000/api/products/?category=${category}`
+      : 'http://127.0.0.1:8000/api/products/';
     
     fetch(url)
       .then(response => response.json())
       .then(data => {
-        // Глубокая проверка и преобразование price
-        const formattedData = data.map(product => {
-          // Проверяем, существует ли вообще price
-          if (product.price === undefined || product.price === null) {
-            console.warn(`Product ${product.id} has no price!`, product);
-            return { ...product, price: 0 };
-          }
-          
-          // Пытаемся преобразовать price в число
-          const price = parseFloat(product.price);
-          if (isNaN(price)) {
-            console.warn(`Invalid price for product ${product.id}:`, product.price);
-            return { ...product, price: 0 };
-          }
-          
-          return { ...product, price };
-        });
-        
+        const formattedData = data.map(product => ({
+          ...product,
+          price: parseFloat(product.price) || 0
+        }));
         setProducts(formattedData);
         setLoading(false);
       })
@@ -44,13 +30,8 @@ const ProductList = () => {
       });
   }, [category]);
 
-  if (loading) {
-    return <div className="loading">Loading products...</div>;
-  }
-
-  if (!loading && products.length === 0) {
-    return <div className="no-products">No products found</div>;
-  }
+  if (loading) return <div className="loading">Loading products...</div>;
+  if (!products.length) return <div className="no-products">No products found</div>;
 
   return (
     <div className="product-list">
@@ -59,25 +40,16 @@ const ProductList = () => {
         {products.map(product => (
           <div key={product.id} className="product-card">
             <Link to={`/products/${product.slug}`}>
-              <div className="product-image">
-                {product.image && (
-                  <img 
-                    src={product.image} 
-                    alt={product.name}
-                    onError={(e) => {
-                      e.target.src = '/placeholder.jpg';
-                    }}
-                  />
-                )}
-              </div>
+              <img 
+                src={product.image} 
+                alt={product.name}
+                onError={(e) => e.target.src = '/placeholder.jpg'}
+              />
               <h3>{product.name}</h3>
-              {/* Гарантированно работающий вариант: */}
-              <p className="price">£{Number(product.price).toFixed(2)}</p>
-              {product.available ? (
-                <p className="in-stock">In Stock ({product.stock})</p>
-              ) : (
-                <p className="out-of-stock">Out of Stock</p>
-              )}
+              <p className="price">£{product.price.toFixed(2)}</p>
+              <p className={product.available ? 'in-stock' : 'out-of-stock'}>
+                {product.available ? 'In Stock' : 'Out of Stock'}
+              </p>
             </Link>
           </div>
         ))}
