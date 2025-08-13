@@ -8,6 +8,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer()
+    price = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        coerce_to_string=False  # Это ключевое изменение!
+    )
     
     class Meta:
         model = Product
